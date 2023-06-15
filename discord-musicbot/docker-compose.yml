@@ -1,0 +1,27 @@
+version: '2'
+
+volumes:
+  lavalink-conf:
+
+services:
+  lavalink:
+    image: fredboat/lavalink:latest
+    restart: always
+    volumes:
+      - lavalink-conf:/opt/Lavalink
+    networks:
+      default:
+        ipv4_address: <your_ip1>
+      
+  app:
+    image: faterek/dc-music-bot:latest
+    restart: always
+    depends_on:
+      - lavalink
+    networks:
+      default:
+        ipv4_address: <your_ip2>
+    
+networks:
+  default:
+    name: <your_network>
