@@ -1,0 +1,74 @@
+version: '2'
+
+volumes:
+  nextcloud:
+  db:
+  colabora-conf:
+
+services:
+  db:
+    image: mariadb:10.5
+    restart: always
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    volumes:
+      - db:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=<your_db_root_password>
+      - MYSQL_PASSWORD=<your_db_password>
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+
+
+  app:
+    image: nextcloud
+    restart: always
+    links:
+      - db
+    volumes:
+      - nextcloud:/var/www/html
+    environment:
+      - MYSQL_PASSWORD=<your_db_password>
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_HOST=db
+    ports:
+      - "587:587"
+    networks:
+      default:
+        ipv4_address: <your_ip1>
+      
+  cron:
+    image: nextcloud
+    restart: always
+    links: 
+      - db
+    volumes:
+      - nextcloud:/var/www/html
+    entrypoint: /cron.sh
+    depends_on:
+      - app
+      - db
+      
+  code-office-server:
+    image: collabora/code:latest-arm64
+    restart: always
+    volumes:
+      - colabora-conf:/etc/coolwsd
+    depends_on:
+      - app
+    cap_add:
+      - MKNOD
+    environment:
+      - aliasgroup1=<your_site_address>
+      - username=<your_username>
+      - password=<your_password>
+      - extra_params='--o:net.proto=IPv4'
+    privileged: true
+    networks:
+      default:
+        ipv4_address: <your_ip2>
+    
+networks:
+  default:
+    name: <your_network>
+
